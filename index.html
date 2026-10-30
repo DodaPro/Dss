@@ -1,0 +1,2106 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>بنك أسئلة - نظم دعم واتخاذ القرار</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Cairo", sans-serif;
+        background-color: #f3f4f6;
+      }
+      .en-text {
+        font-family: "Inter", sans-serif;
+        direction: ltr;
+        text-align: left;
+      }
+      .ar-text {
+        font-family: "Cairo", sans-serif;
+        direction: rtl;
+        text-align: right;
+      }
+      .option-btn {
+        transition: all 0.2s ease-in-out;
+      }
+      .option-btn.selected-correct {
+        background-color: #10b981;
+        color: white;
+        border-color: #059669;
+      }
+      .option-btn.selected-wrong {
+        background-color: #ef4444;
+        color: white;
+        border-color: #dc2626;
+      }
+      .option-btn.actual-correct {
+        background-color: #10b981;
+        color: white;
+        border-color: #059669;
+        opacity: 0.9;
+      }
+      .fade-in {
+        animation: fadeIn 0.3s ease-in;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body class="text-gray-800 antialiased">
+    <!-- Header -->
+    <header class="bg-blue-800 text-white shadow-lg sticky top-0 z-50">
+      <div
+        class="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center"
+      >
+        <div>
+          <h1 class="text-2xl font-bold">بنك الأسئلة التفاعلي الشامل</h1>
+          <p class="text-blue-200 text-sm mt-1">
+            نظم دعم و اتخاذ القرار - مع الترجمة والتفسير الذكي
+          </p>
+        </div>
+        <div
+          class="mt-4 md:mt-0 bg-blue-700 px-6 py-2 rounded-full shadow-inner text-center"
+        >
+          <span class="text-sm">النتيجة الإجمالية</span>
+          <div class="text-xl font-bold" id="score-display">0 / 0</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation / Tabs -->
+    <nav class="bg-white shadow">
+      <div
+        class="container mx-auto px-4 py-2 flex overflow-x-auto space-x-2 space-x-reverse"
+      >
+        <button
+          onclick="switchTab('mcq1')"
+          class="tab-btn px-4 py-2 rounded-md font-semibold bg-blue-100 text-blue-800"
+          id="tab-mcq1"
+        >
+          الملف الأول (q2.pdf)
+        </button>
+        <button
+          onclick="switchTab('mcq2')"
+          class="tab-btn px-4 py-2 rounded-md font-semibold text-gray-600 hover:bg-gray-100"
+          id="tab-mcq2"
+        >
+          الملف الثاني (q1.docx)
+        </button>
+        <button
+          onclick="switchTab('mcq3')"
+          class="tab-btn px-4 py-2 rounded-md font-semibold text-gray-600 hover:bg-gray-100"
+          id="tab-mcq3"
+        >
+          الملف الثالث (q3.docx)
+        </button>
+        <button
+          onclick="switchTab('tf')"
+          class="tab-btn px-4 py-2 rounded-md font-semibold text-gray-600 hover:bg-gray-100"
+          id="tab-tf"
+        >
+          صح/خطأ (q4.docx)
+        </button>
+        <button
+          onclick="switchTab('essay')"
+          class="tab-btn px-4 py-2 rounded-md font-semibold text-gray-600 hover:bg-gray-100"
+          id="tab-essay"
+        >
+          مقالي (q4.docx)
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 mb-20 max-w-4xl">
+      <div id="quiz-container" class="space-y-6">
+        <!-- Content will be injected here via JavaScript -->
+      </div>
+    </main>
+
+    <script>
+      // Data Structure with Translations, Hints, and Explanations based strictly on lecture notes
+      const db = {
+        mcq1: [
+          // From q2.pdf
+          {
+            q: "1. What does DSS stand for?",
+            options: [
+              "A. Data Storage System",
+              "B. Decision Support System",
+              "C. Database Security System",
+              "D. Digital Software System",
+            ],
+            ans: 1,
+            ar_q: "1. ماذا يعني اختصار DSS؟",
+            ar_options: [
+              "أ. نظام تخزين البيانات",
+              "ب. نظام دعم اتخاذ القرار",
+              "ج. نظام أمن قواعد البيانات",
+              "د. نظام البرمجيات الرقمية",
+            ],
+            hint: "يتعلق النظام بمساعدة المديرين في اتخاذ قراراتهم.",
+            exp: "DSS تعني Decision Support System (نظام دعم اتخاذ القرار)، وهو مصمم خصيصاً لدعم عملية صنع القرار.",
+          },
+          {
+            q: "2. What is the primary purpose of a Decision Support System (DSS)?",
+            options: [
+              "A. To replace all managers",
+              "B. To manage employee attendance only",
+              "C. To help managers make decisions",
+              "D. To store files without analyzing them",
+            ],
+            ans: 2,
+            ar_q: "2. ما هو الغرض الأساسي لنظام دعم اتخاذ القرار (DSS)؟",
+            ar_options: [
+              "أ. استبدال جميع المديرين",
+              "ب. إدارة حضور الموظفين فقط",
+              "ج. مساعدة المديرين في اتخاذ القرارات",
+              "د. تخزين الملفات دون تحليلها",
+            ],
+            hint: "النظام لا يلغي دور العنصر البشري.",
+            exp: "الهدف الأساسي لـ DSS هو مساعدة المديرين (To aid decision-makers) وليس استبدالهم.",
+          },
+          {
+            q: "3. DSS is commonly used for:",
+            options: [
+              "A. Planning and analyzing alternatives",
+              "B. Formatting documents only",
+              "C. Managing computer hardware",
+              "D. Creating operating systems",
+            ],
+            ans: 0,
+            ar_q: "3. يُستخدم نظام DSS بشكل شائع في:",
+            ar_options: [
+              "أ. التخطيط وتحليل البدائل",
+              "ب. تنسيق المستندات فقط",
+              "ج. إدارة أجهزة الكمبيوتر",
+              "د. إنشاء أنظمة التشغيل",
+            ],
+            hint: "المديرون يحتاجون إلى المفاضلة بين خيارات مختلفة.",
+            exp: "يستخدم في التخطيط وتحليل البدائل (Planning and analyzing alternatives) لدعم القرارات الاستراتيجية والتكتيكية.",
+          },
+          {
+            q: "4. How does DSS differ from most traditional information systems?",
+            options: [
+              "A. It does not use data",
+              "B. It is specifically designed for particular managerial needs",
+              "C. It is used only by customers",
+              "D. It cannot analyze information",
+            ],
+            ans: 1,
+            ar_q: "4. كيف يختلف DSS عن معظم أنظمة المعلومات التقليدية؟",
+            ar_options: [
+              "أ. لا يستخدم البيانات",
+              "ب. مصمم خصيصًا لاحتياجات إدارية معينة",
+              "ج. يستخدم من قبل العملاء فقط",
+              "د. لا يستطيع تحليل المعلومات",
+            ],
+            hint: "النظام مصمم ليكون مرناً ومخصصاً.",
+            exp: "على عكس الأنظمة التقليدية، DSS مصمم لحل مشكلات إدارية محددة أو مهام معينة.",
+          },
+          {
+            q: "5. A DSS is usually prepared for:",
+            options: [
+              "A. Every possible organizational problem",
+              "B. A specific managerial task or problem",
+              "C. Personal entertainment",
+              "D. Computer maintenance only",
+            ],
+            ans: 1,
+            ar_q: "5. يتم إعداد DSS عادةً من أجل:",
+            ar_options: [
+              "أ. كل مشكلة تنظيمية محتملة",
+              "ب. مهمة أو مشكلة إدارية محددة",
+              "ج. الترفيه الشخصي",
+              "د. صيانة الكمبيوتر فقط",
+            ],
+            hint: "لا يوجد نظام واحد يحل كل شيء.",
+            exp: "يُصمم DSS لمعالجة موقف أو مشكلة إدارية محددة (A specific managerial task or problem).",
+          },
+          {
+            q: "6. DSS is considered part of which organizational system?",
+            options: [
+              "A. Management Information System (MIS)",
+              "B. Operating System (OS)",
+              "C. Database Management System (DBMS) only",
+              "D. Transaction Processing System (TPS) only",
+            ],
+            ans: 0,
+            ar_q: "6. يعتبر DSS جزءاً من أي نظام تنظيمي؟",
+            ar_options: [
+              "أ. نظام المعلومات الإدارية (MIS)",
+              "ب. نظام التشغيل (OS)",
+              "ج. نظام إدارة قواعد البيانات (DBMS) فقط",
+              "د. نظام معالجة المعاملات (TPS) فقط",
+            ],
+            hint: "هو نظام يوفر معلومات للإدارة.",
+            exp: "يعتبر DSS تطوراً وجزءاً من أنظمة المعلومات الإدارية (MIS) التي تخدم المؤسسة.",
+          },
+          {
+            q: "7. Which management levels are particularly served by DSS?",
+            options: [
+              "A. Operational workers only",
+              "B. Customers and suppliers",
+              "C. Management control and strategic planning",
+              "D. Entry-level employees only",
+            ],
+            ans: 2,
+            ar_q: "7. ما هي المستويات الإدارية التي يخدمها DSS بشكل خاص؟",
+            ar_options: [
+              "أ. العمال التشغيليون فقط",
+              "ب. العملاء والموردون",
+              "ج. الرقابة الإدارية والتخطيط الاستراتيجي",
+              "د. الموظفون المبتدئون فقط",
+            ],
+            hint: "يخدم المستويات العليا والوسطى.",
+            exp: "يخدم DSS مستويات الرقابة الإدارية والتخطيط الاستراتيجي (التكتيكية والاستراتيجية).",
+          },
+          {
+            q: "8. Which of the following is a main component of DSS?",
+            options: [
+              "A. Database",
+              "B. Model base",
+              "C. User interface",
+              "D. All of the above",
+            ],
+            ans: 3,
+            ar_q: "8. أي مما يلي يعتبر مكوناً رئيسياً لـ DSS؟",
+            ar_options: [
+              "أ. قاعدة البيانات",
+              "ب. قاعدة النماذج",
+              "ج. واجهة المستخدم",
+              "د. جميع ما سبق",
+            ],
+            hint: "يتكون النظام من بيانات ونماذج وواجهة.",
+            exp: "يتكون DSS من 3 مكونات رئيسية: قاعدة البيانات، وقاعدة النماذج (نظام البرمجيات)، وواجهة المستخدم.",
+          },
+          {
+            q: "9. The database component of DSS contains:",
+            options: [
+              "A. Master files and data from external sources",
+              "B. Only printed documents",
+              "C. Only computer programs",
+              "D. Only employee passwords",
+            ],
+            ans: 0,
+            ar_q: "9. مكون قاعدة البيانات في DSS يحتوي على:",
+            ar_options: [
+              "أ. الملفات الرئيسية وبيانات من مصادر خارجية",
+              "ب. المستندات المطبوعة فقط",
+              "ج. برامج الكمبيوتر فقط",
+              "د. كلمات مرور الموظفين فقط",
+            ],
+            hint: "تجمع البيانات من الداخل والخارج.",
+            exp: "تحتوي قاعدة البيانات على بيانات من مصادر داخلية (تطبيقات المؤسسة) وخارجية.",
+          },
+          {
+            q: "10. What is the main function of the model base in DSS?",
+            options: [
+              "A. To communicate with external users only",
+              "B. To manipulate and analyze data in desired ways",
+              "C. To replace the database",
+              "D. To control computer hardware",
+            ],
+            ans: 1,
+            ar_q: "10. ما هي الوظيفة الرئيسية لقاعدة النماذج في DSS؟",
+            ar_options: [
+              "أ. التواصل مع المستخدمين الخارجيين فقط",
+              "ب. معالجة وتحليل البيانات بالطرق المطلوبة",
+              "ج. استبدال قاعدة البيانات",
+              "د. التحكم في أجهزة الكمبيوتر",
+            ],
+            hint: "النماذج تستخدم للتحليل الرياضي.",
+            exp: "تُستخدم قاعدة النماذج لمعالجة وتحليل البيانات المعقدة وتوقع النتائج بناءً على ظروف معينة.",
+          },
+          {
+            q: "11. Which component allows users to communicate with the DSS?",
+            options: [
+              "A. Database",
+              "B. Model base",
+              "C. User interface",
+              "D. Master file",
+            ],
+            ans: 2,
+            ar_q: "11. أي مكون يسمح للمستخدمين بالتواصل مع DSS؟",
+            ar_options: [
+              "أ. قاعدة البيانات",
+              "ب. قاعدة النماذج",
+              "ج. واجهة المستخدم",
+              "د. الملف الرئيسي",
+            ],
+            hint: "الشاشة التي يتفاعل معها المستخدم.",
+            exp: "واجهة المستخدم (User Interface) هي الأداة التي يتفاعل من خلالها المستخدم مع النظام للحصول على المخرجات.",
+          },
+          {
+            q: "12. According to the lecture, the physical interface generally consists of:",
+            options: [
+              "A. A printer connected to a scanner",
+              "B. A terminal attached to a mainframe computer",
+              "C. A mobile phone without software",
+              "D. A storage device only",
+            ],
+            ans: 1,
+            ar_q: "12. وفقاً للمحاضرة، تتكون الواجهة المادية بشكل عام من:",
+            ar_options: [
+              "أ. طابعة متصلة بماسح ضوئي",
+              "ب. محطة طرفية متصلة بجهاز كمبيوتر مركزي",
+              "ج. هاتف محمول بدون برامج",
+              "د. جهاز تخزين فقط",
+            ],
+            hint: "جهاز يستخدم لإدخال الأوامر والاتصال بالخادم.",
+            exp: "الواجهة المادية غالباً ما تكون محطة طرفية (Terminal) أو جهاز حاسوب متصل بالخادم الرئيسي (Mainframe).",
+          },
+          {
+            q: "13. The terminal mentioned in the lecture may be connected to the mainframe computer:",
+            options: [
+              "A. Only through a telephone",
+              "B. Only through a direct connection",
+              "C. Either directly or by telephone",
+              "D. Only through a printer",
+            ],
+            ans: 2,
+            ar_q: "13. المحطة الطرفية المذكورة يمكن توصيلها بالكمبيوتر المركزي عن طريق:",
+            ar_options: [
+              "أ. الهاتف فقط",
+              "ب. اتصال مباشر فقط",
+              "ج. إما مباشرة أو عبر الهاتف",
+              "د. من خلال طابعة فقط",
+            ],
+            hint: "هناك أكثر من طريقة للاتصال.",
+            exp: "يمكن أن يتم الاتصال إما بشكل مباشر (Direct connection) أو عبر شبكات الاتصال/الهاتف.",
+          },
+          {
+            q: "14. Decision Support Systems are described as:",
+            options: [
+              "A. Interactive information systems",
+              "B. Systems that only store data",
+              "C. Systems that never use software",
+              "D. Systems designed exclusively for customers",
+            ],
+            ans: 0,
+            ar_q: "14. توصف أنظمة دعم اتخاذ القرار بأنها:",
+            ar_options: [
+              "أ. أنظمة معلومات تفاعلية",
+              "ب. أنظمة تقوم بتخزين البيانات فقط",
+              "ج. أنظمة لا تستخدم البرامج أبدًا",
+              "د. أنظمة مصممة حصريًا للعملاء",
+            ],
+            hint: "تتفاعل مع المستخدم للإجابة على أسئلته.",
+            exp: "DSS هي أنظمة تفاعلية (Interactive) تعتمد على استجابة النظام لمدخلات وأسئلة المدير.",
+          },
+          {
+            q: "15. DSS combines data with:",
+            options: [
+              "A. Smart models and user-friendly software",
+              "B. Printers and scanners only",
+              "C. Paper records only",
+              "D. Operating systems without data",
+            ],
+            ans: 0,
+            ar_q: "15. يجمع DSS بين البيانات و:",
+            ar_options: [
+              "أ. نماذج ذكية وبرامج سهلة الاستخدام",
+              "ب. طابعات وماسحات ضوئية فقط",
+              "ج. سجلات ورقية فقط",
+              "د. أنظمة تشغيل بدون بيانات",
+            ],
+            hint: "البيانات وحدها لا تكفي، تحتاج لتحليل.",
+            exp: "يمزج DSS بين البيانات والنماذج التحليلية الذكية ضمن واجهة مستخدم سهلة.",
+          },
+          {
+            q: "16. DSS supports which type of decision-making?",
+            options: [
+              "A. Only routine decisions",
+              "B. Semi-structured decision-making",
+              "C. Only personal decisions",
+              "D. Decisions without any information",
+            ],
+            ans: 1,
+            ar_q: "16. يدعم DSS أي نوع من اتخاذ القرارات؟",
+            ar_options: [
+              "أ. القرارات الروتينية فقط",
+              "ب. اتخاذ القرارات شبه المهيكلة",
+              "ج. القرارات الشخصية فقط",
+              "د. القرارات بدون أي معلومات",
+            ],
+            hint: "القرارات التي تتطلب تقديراً وحكماً بشرياً مع البيانات.",
+            exp: "تم تصميم DSS للتعامل مع القرارات شبه المهيكلة وغير المهيكلة (Semi-structured and unstructured).",
+          },
+          {
+            q: "17. What is one major benefit of DSS for management?",
+            options: [
+              "A. Eliminating the need for information",
+              "B. Improving the quality of decisions",
+              "C. Preventing all organizational changes",
+              "D. Removing the need for planning",
+            ],
+            ans: 1,
+            ar_q: "17. ما هي إحدى الفوائد الرئيسية لنظام DSS للإدارة؟",
+            ar_options: [
+              "أ. القضاء على الحاجة للمعلومات",
+              "ب. تحسين جودة القرارات",
+              "ج. منع كافة التغييرات التنظيمية",
+              "د. إزالة الحاجة للتخطيط",
+            ],
+            hint: "يؤدي إلى نتائج أعمال أفضل.",
+            exp: "من أهم فوائده تحسين جودة القرارات في المواقف المعقدة وتقليل نسبة الخطأ.",
+          },
+          {
+            q: "18. According to the lecture, MIS is considered more useful for:",
+            options: [
+              "A. Structured decisions",
+              "B. Unstructured strategic decisions only",
+              "C. Decisions without data",
+              "D. Personal entertainment decisions",
+            ],
+            ans: 0,
+            ar_q: "18. وفقاً للمحاضرة، يعتبر نظام المعلومات الإدارية MIS أكثر فائدة لـ:",
+            ar_options: [
+              "أ. القرارات المهيكلة (المبرمجة)",
+              "ب. القرارات الاستراتيجية غير المهيكلة فقط",
+              "ج. القرارات بدون بيانات",
+              "د. قرارات الترفيه الشخصية",
+            ],
+            hint: "MIS يعتمد على تقارير دورية قياسية.",
+            exp: "نظم MIS مفيدة أكثر للقرارات المهيكلة والروتينية، بينما DSS مفيد للقرارات غير المهيكلة.",
+          },
+          {
+            q: "19. DSS is particularly useful when decision-makers face:",
+            options: [
+              "A. Simple tasks with no alternatives",
+              "B. Complex decisions involving multiple factors",
+              "C. Tasks that require no analysis",
+              "D. Problems unrelated to management",
+            ],
+            ans: 1,
+            ar_q: "19. يكون DSS مفيداً بشكل خاص عندما يواجه متخذو القرار:",
+            ar_options: [
+              "أ. مهام بسيطة لا بدائل لها",
+              "ب. قرارات معقدة تنطوي على عوامل متعددة",
+              "ج. مهام لا تتطلب تحليلاً",
+              "د. مشاكل لا علاقة لها بالإدارة",
+            ],
+            hint: "عندما تزداد المتغيرات ويصعب حسابها يدوياً.",
+            exp: "تبرز قيمة النظام عند وجود متغيرات وعوامل متعددة تجعل القرار معقداً (Complex decisions).",
+          },
+          {
+            q: "20. Does a DSS always provide the final decision itself?",
+            options: [
+              "A. Yes, in every situation",
+              "B. Yes, but only for strategic decisions",
+              "C. No, it supports the decision-making process",
+              "D. No, because it cannot process information",
+            ],
+            ans: 2,
+            ar_q: "20. هل يقدم DSS دائمًا القرار النهائي بنفسه؟",
+            ar_options: [
+              "أ. نعم، في كل موقف",
+              "ب. نعم، ولكن للقرارات الاستراتيجية فقط",
+              "ج. لا، بل يدعم عملية اتخاذ القرار",
+              "د. لا، لأنه لا يستطيع معالجة المعلومات",
+            ],
+            hint: "اسمه 'دعم' وليس 'اتخاذ' تلقائي.",
+            exp: "النظام لا يتخذ القرار النهائي بدلاً من المدير، بل يقدم التحليلات لـ 'دعم' المدير في اتخاذ القرار.",
+          },
+          {
+            q: "21. What technique can DSS use to validate a decision?",
+            options: [
+              "A. Sensitivity analysis",
+              "B. File compression",
+              "C. Data printing",
+              "D. Word processing",
+            ],
+            ans: 0,
+            ar_q: "21. ما هي التقنية التي يمكن لـ DSS استخدامها للتحقق من صحة القرار؟",
+            ar_options: [
+              "أ. تحليل الحساسية",
+              "ب. ضغط الملفات",
+              "ج. طباعة البيانات",
+              "د. معالجة الكلمات",
+            ],
+            hint: "تحليل يدرس أثر التغيرات.",
+            exp: "يستخدم DSS تقنيات رياضية مثل تحليل الحساسية (Sensitivity analysis) لدراسة أثر تغيير المتغيرات وتقييم البدائل.",
+          },
+          {
+            q: "22. Sensitivity analysis in DSS is used to examine:",
+            options: [
+              "A. Different parameters or conditions of a problem",
+              "B. Computer screen brightness",
+              "C. The physical size of a database",
+              "D. The number of computer users only",
+            ],
+            ans: 0,
+            ar_q: "22. يُستخدم تحليل الحساسية في DSS لفحص:",
+            ar_options: [
+              "أ. معلمات أو ظروف مختلفة للمشكلة",
+              "ب. سطوع شاشة الكمبيوتر",
+              "ج. الحجم المادي لقاعدة البيانات",
+              "د. عدد مستخدمي الكمبيوتر فقط",
+            ],
+            hint: "دراسة ماذا يحدث إذا تغير شرط معين.",
+            exp: "يُستخدم لفحص تأثير تغيير المتغيرات أو المعلمات المختلفة على النتيجة النهائية (What-if analysis).",
+          },
+        ],
+        mcq2: [
+          // From q1.docx
+          {
+            q: "1. What does DSS stand for?",
+            options: [
+              "A. Data Security System",
+              "B. Decision Support System",
+              "C. Digital Software System",
+              "D. Decision Storage System",
+            ],
+            ans: 1,
+            ar_q: "1. ماذا يعني اختصار DSS؟",
+            ar_options: [
+              "أ. نظام أمن البيانات",
+              "ب. نظام دعم اتخاذ القرار",
+              "ج. نظام البرمجيات الرقمية",
+              "د. نظام تخزين القرارات",
+            ],
+            hint: "نظام يدعم صانع القرار.",
+            exp: "DSS = Decision Support System",
+          },
+          {
+            q: "2. Decision-making is defined as a process that results in:",
+            options: [
+              "A. Collecting information only",
+              "B. Selecting a course of action among alternatives",
+              "C. Creating databases",
+              "D. Managing employees",
+            ],
+            ans: 1,
+            ar_q: "2. يُعرَّف اتخاذ القرار بأنه عملية تؤدي إلى:",
+            ar_options: [
+              "أ. جمع المعلومات فقط",
+              "ب. اختيار مسار عمل من بين البدائل",
+              "ج. إنشاء قواعد البيانات",
+              "د. إدارة الموظفين",
+            ],
+            hint: "عملية اختيار.",
+            exp: "اتخاذ القرار هو عملية اختيار مسار عمل (Course of action) من بين مجموعة بدائل.",
+          },
+          {
+            q: "3. Decision-making is considered:",
+            options: [
+              "A. A weekly activity",
+              "B. A monthly activity",
+              "C. A daily activity for human beings",
+              "D. An activity limited to managers",
+            ],
+            ans: 2,
+            ar_q: "3. يعتبر اتخاذ القرار:",
+            ar_options: [
+              "أ. نشاط أسبوعي",
+              "ب. نشاط شهري",
+              "ج. نشاط يومي للبشر",
+              "د. نشاط يقتصر على المديرين",
+            ],
+            hint: "نقوم به في كل لحظة.",
+            exp: "اتخاذ القرار هو نشاط يومي ومستمر يمارسه البشر باستمرار.",
+          },
+          {
+            q: "4. Successful decisions in organizations generally result in:",
+            options: [
+              "A. Losses",
+              "B. Profits",
+              "C. Conflicts only",
+              "D. Delays",
+            ],
+            ans: 1,
+            ar_q: "4. القرارات الناجحة في المنظمات تؤدي بشكل عام إلى:",
+            ar_options: ["أ. خسائر", "ب. أرباح", "ج. صراعات فقط", "د. تأخيرات"],
+            hint: "الهدف من أي عمل تجاري ناجح.",
+            exp: "القرارات الناجحة تقود المؤسسات لتحقيق الأهداف وزيادة الأرباح (Profits).",
+          },
+          {
+            q: "5. In decision-making, we choose:",
+            options: [
+              "A. All available alternatives",
+              "B. One course of action from possible alternatives",
+              "C. No alternatives",
+              "D. Only the most expensive alternative",
+            ],
+            ans: 1,
+            ar_q: "5. في عملية اتخاذ القرار، نختار:",
+            ar_options: [
+              "أ. جميع البدائل المتاحة",
+              "ب. مسار عمل واحد من البدائل الممكنة",
+              "ج. لا توجد بدائل",
+              "د. البديل الأغلى فقط",
+            ],
+            hint: "لا يمكنك السير في كل الطرق معاً.",
+            exp: "يتم اختيار مسار عمل واحد (One course of action) يمثل البديل الأفضل.",
+          },
+          {
+            q: "6. Corporate decision-making is considered critical because:",
+            options: [
+              "A. It always takes a short time",
+              "B. Decisions can affect organizational profits and losses",
+              "C. It does not involve alternatives",
+              "D. It eliminates all conflicts",
+            ],
+            ans: 1,
+            ar_q: "6. اتخاذ القرارات المؤسسية يعتبر حاسماً لأن:",
+            ar_options: [
+              "أ. دائما يستغرق وقتا قصيرا",
+              "ب. القرارات يمكن أن تؤثر على أرباح وخسائر المنظمة",
+              "ج. لا ينطوي على بدائل",
+              "د. يقضي على جميع الصراعات",
+            ],
+            hint: "يتعلق بالمال والاستمرارية.",
+            exp: "القرارات الخاطئة قد تسبب خسائر فادحة، والصحيحة تجلب الأرباح، لذا فهي حرجة (Critical).",
+          },
+          {
+            q: "7. What is the first step in the decision-making process?",
+            options: [
+              "A. Evaluate the results",
+              "B. Select the best alternative",
+              "C. Identify the purpose of the decision",
+              "D. Execute the decision",
+            ],
+            ans: 2,
+            ar_q: "7. ما هي الخطوة الأولى في عملية اتخاذ القرار؟",
+            ar_options: [
+              "أ. تقييم النتائج",
+              "ب. اختيار أفضل بديل",
+              "ج. تحديد الغرض من القرار",
+              "د. تنفيذ القرار",
+            ],
+            hint: "يجب أن تعرف الهدف أولاً.",
+            exp: "الخطوة الأولى هي تحديد المشكلة أو الغرض من القرار (Identify the purpose of the decision).",
+          },
+          {
+            q: "8. Which question is asked when identifying the purpose of a decision?",
+            options: [
+              "A. What exactly is the problem?",
+              "B. What is the employee's salary?",
+              "C. What software should be purchased?",
+              "D. Who will print the report?",
+            ],
+            ans: 0,
+            ar_q: "8. ما السؤال الذي يتم طرحه عند تحديد الغرض من القرار؟",
+            ar_options: [
+              "أ. ما هي المشكلة بالضبط؟",
+              "ب. ما هو راتب الموظف؟",
+              "ج. ما هو البرنامج الذي يجب شراؤه؟",
+              "د. من سيطبع التقرير؟",
+            ],
+            hint: "سؤال عن جوهر الموضوع.",
+            exp: "في الخطوة الأولى نسأل 'ما هي المشكلة بالضبط؟' (What exactly is the problem).",
+          },
+          {
+            q: "9. The second step of the decision-making process is:",
+            options: [
+              "A. Information Gathering",
+              "B. Evaluation of Results",
+              "C. Execution",
+              "D. Selection of the Best Alternative",
+            ],
+            ans: 0,
+            ar_q: "9. الخطوة الثانية في عملية اتخاذ القرار هي:",
+            ar_options: [
+              "أ. جمع المعلومات",
+              "ب. تقييم النتائج",
+              "ج. التنفيذ",
+              "د. اختيار أفضل بديل",
+            ],
+            hint: "تحتاج إلى بيانات لفهم المشكلة.",
+            exp: "بعد تحديد المشكلة، الخطوة الثانية هي جمع المعلومات (Information Gathering).",
+          },
+          {
+            q: "10. During information gathering, it is important to collect information about:",
+            options: [
+              "A. Only managers",
+              "B. Factors and stakeholders involved in the problem",
+              "C. Only customers",
+              "D. Only competitors",
+            ],
+            ans: 1,
+            ar_q: "10. أثناء جمع المعلومات، من المهم جمع معلومات حول:",
+            ar_options: [
+              "أ. المديرين فقط",
+              "ب. العوامل وأصحاب المصلحة المعنيين بالمشكلة",
+              "ج. العملاء فقط",
+              "د. المنافسين فقط",
+            ],
+            hint: "يجب جمع بيانات عن كل ما يحيط بالمشكلة.",
+            exp: "يجب جمع البيانات حول كافة العوامل (Factors) والأطراف المعنية (Stakeholders).",
+          },
+          {
+            q: "11. Which tool can be effectively used for information gathering?",
+            options: [
+              "A. Pareto Chart",
+              "B. Check Sheets",
+              "C. Keyboard",
+              "D. Database",
+            ],
+            ans: 1,
+            ar_q: "11. ما هي الأداة التي يمكن استخدامها بفعالية لجمع المعلومات؟",
+            ar_options: [
+              "أ. مخطط باريتو",
+              "ب. قوائم المراجعة (Check Sheets)",
+              "ج. لوحة المفاتيح",
+              "د. قاعدة البيانات",
+            ],
+            hint: "أداة لتسجيل الملاحظات.",
+            exp: "تُستخدم قوائم المراجعة (Check Sheets) كأداة فعالة لجمع وتسجيل المعلومات حول المشكلة.",
+          },
+          {
+            q: "12. In Step 3, organizations establish:",
+            options: [
+              "A. Programming languages",
+              "B. Baseline criteria for judging alternatives",
+              "C. Employee schedules",
+              "D. Network connections",
+            ],
+            ans: 1,
+            ar_q: "12. في الخطوة 3، تضع المنظمات:",
+            ar_options: [
+              "أ. لغات البرمجة",
+              "ب. المعايير الأساسية للحكم على البدائل",
+              "ج. جداول الموظفين",
+              "د. اتصالات الشبكة",
+            ],
+            hint: "المقاييس التي سنقيس بها الحلول.",
+            exp: "الخطوة الثالثة هي وضع المعايير (Baseline criteria) التي سيتم بناءً عليها تقييم البدائل.",
+          },
+          {
+            q: "13. When defining decision-making criteria, organizations should consider:",
+            options: [
+              "A. Organizational goals and corporate culture",
+              "B. Only employee preferences",
+              "C. Only technology",
+              "D. Only time",
+            ],
+            ans: 0,
+            ar_q: "13. عند تحديد معايير اتخاذ القرار، ينبغي للمنظمات أن تأخذ في الاعتبار:",
+            ar_options: [
+              "أ. الأهداف التنظيمية وثقافة الشركة",
+              "ب. تفضيلات الموظفين فقط",
+              "ج. التكنولوجيا فقط",
+              "د. الوقت فقط",
+            ],
+            hint: "المعايير ترتبط برؤية الشركة.",
+            exp: "يجب أن تتوافق المعايير مع أهداف المؤسسة (Organizational goals) وثقافتها.",
+          },
+          {
+            q: "14. Which of the following is mentioned as a major concern in decision-making?",
+            options: [
+              "A. Profit",
+              "B. Entertainment",
+              "C. Advertising",
+              "D. Transportation",
+            ],
+            ans: 0,
+            ar_q: "14. أي مما يلي يُذكر كاهتمام رئيسي في اتخاذ القرار؟",
+            ar_options: ["أ. الربح", "ب. الترفيه", "ج. الإعلان", "د. النقل"],
+            hint: "الهدف المالي للمنظمات.",
+            exp: "تحقيق الربح (Profit) يعتبر من أهم الدوافع والمعايير في اتخاذ القرارات المؤسسية.",
+          },
+          {
+            q: "15. The best option for generating ideas in Step 4 is:",
+            options: [
+              "A. Brainstorming",
+              "B. Programming",
+              "C. Networking",
+              "D. Printing",
+            ],
+            ans: 0,
+            ar_q: "15. الخيار الأفضل لتوليد الأفكار في الخطوة 4 هو:",
+            ar_options: [
+              "أ. العصف الذهني",
+              "ب. البرمجة",
+              "ج. التواصل الشبكي",
+              "د. الطباعة",
+            ],
+            hint: "جلسة لتوليد أكبر عدد من الأفكار.",
+            exp: "يُعتبر العصف الذهني (Brainstorming) أفضل وسيلة لتوليد البدائل والأفكار لحل المشكلة.",
+          },
+          {
+            q: "16. Which tool helps identify possible causes of a problem?",
+            options: [
+              "A. Pareto Chart",
+              "B. Cause-and-Effect Diagram",
+              "C. Check Sheet only",
+              "D. Spreadsheet",
+            ],
+            ans: 1,
+            ar_q: "16. ما الأداة التي تساعد في تحديد الأسباب المحتملة للمشكلة؟",
+            ar_options: [
+              "أ. مخطط باريتو",
+              "ب. مخطط السبب والأثر (عظم السمكة)",
+              "ج. قائمة المراجعة فقط",
+              "د. جدول البيانات",
+            ],
+            hint: "مخطط يربط النتيجة بأسبابها.",
+            exp: "يُستخدم مخطط السبب والأثر (Cause-and-Effect Diagram / Ishikawa) لمعرفة الأسباب الجذرية للمشكلة.",
+          },
+          {
+            q: "17. A Pareto Chart helps to:",
+            options: [
+              "A. Store information",
+              "B. Prioritize and identify causes with the highest effect",
+              "C. Execute decisions",
+              "D. Collect employee salaries",
+            ],
+            ans: 1,
+            ar_q: "17. يساعد مخطط باريتو على:",
+            ar_options: [
+              "أ. تخزين المعلومات",
+              "ب. تحديد الأولويات وتحديد الأسباب ذات التأثير الأكبر",
+              "ج. تنفيذ القرارات",
+              "د. جمع رواتب الموظفين",
+            ],
+            hint: "قاعدة 80/20.",
+            exp: "مخطط باريتو (Pareto Chart) يساعد في ترتيب المشاكل وتحديد الـ 20% من الأسباب التي تؤدي لـ 80% من التأثيرات.",
+          },
+          {
+            q: "18. In Step 5, alternatives are evaluated by:",
+            options: [
+              "A. Ignoring their disadvantages",
+              "B. Comparing their positives and negatives",
+              "C. Selecting all alternatives",
+              "D. Avoiding judgment criteria",
+            ],
+            ans: 1,
+            ar_q: "18. في الخطوة 5، يتم تقييم البدائل من خلال:",
+            ar_options: [
+              "أ. تجاهل عيوبها",
+              "ب. مقارنة إيجابياتها وسلبياتها",
+              "ج. اختيار كافة البدائل",
+              "د. تجنب معايير الحكم",
+            ],
+            hint: "الموازنة بين الربح والخسارة لكل حل.",
+            exp: "يتم تقييم البدائل بمقارنة الإيجابيات (Pros) والسلبيات (Cons) لكل بديل متاح.",
+          },
+          {
+            q: "19. What is Step 6 of the decision-making process?",
+            options: [
+              "A. Gather information",
+              "B. Select the Best Alternative",
+              "C. Identify the problem",
+              "D. Evaluate the results",
+            ],
+            ans: 1,
+            ar_q: "19. ما هي الخطوة 6 في عملية اتخاذ القرار؟",
+            ar_options: [
+              "أ. جمع المعلومات",
+              "ب. اختيار أفضل بديل",
+              "ج. تحديد المشكلة",
+              "د. تقييم النتائج",
+            ],
+            hint: "بعد التقييم يأتي...",
+            exp: "بعد تقييم البدائل في الخطوة 5، نقوم في الخطوة 6 باختيار البديل الأفضل (Select the Best Alternative).",
+          },
+          {
+            q: "20. Step 7 involves:",
+            options: [
+              "A. Executing the decision",
+              "B. Gathering information",
+              "C. Brainstorming",
+              "D. Identifying stakeholders",
+            ],
+            ans: 0,
+            ar_q: "20. تتضمن الخطوة 7:",
+            ar_options: [
+              "أ. تنفيذ القرار",
+              "ب. جمع المعلومات",
+              "ج. العصف الذهني",
+              "د. تحديد أصحاب المصلحة",
+            ],
+            hint: "وضع القرار موضع التنفيذ.",
+            exp: "الخطوة السابعة هي تحويل القرار إلى أفعال عبر تنفيذ القرار (Executing the decision).",
+          },
+          {
+            q: "21. Executing a decision means:",
+            options: [
+              "A. Ignoring the decision",
+              "B. Converting the decision into a plan or sequence of activities",
+              "C. Gathering new alternatives only",
+              "D. Canceling the decision",
+            ],
+            ans: 1,
+            ar_q: "21. تنفيذ القرار يعني:",
+            ar_options: [
+              "أ. تجاهل القرار",
+              "ب. تحويل القرار إلى خطة أو تسلسل للأنشطة",
+              "ج. جمع بدائل جديدة فقط",
+              "د. إلغاء القرار",
+            ],
+            hint: "العمل الفعلي.",
+            exp: "التنفيذ يعني تحويل مسار العمل المختار إلى خطة واقعية وسلسلة أنشطة قابلة للتطبيق.",
+          },
+          {
+            q: "22. What is the final step of the decision-making process?",
+            options: [
+              "A. Brainstorming",
+              "B. Information Gathering",
+              "C. Evaluate the Results",
+              "D. Select the Best Alternative",
+            ],
+            ans: 2,
+            ar_q: "22. ما هي الخطوة الأخيرة في عملية اتخاذ القرار؟",
+            ar_options: [
+              "أ. العصف الذهني",
+              "ب. جمع المعلومات",
+              "ج. تقييم النتائج",
+              "د. اختيار أفضل بديل",
+            ],
+            hint: "مراجعة ما تم إنجازه.",
+            exp: "الخطوة الأخيرة (رقم 8) هي تقييم النتائج (Evaluate the Results) للتعلم من التجربة.",
+          },
+          {
+            q: "23. Evaluating the results helps an organization to:",
+            options: [
+              "A. Learn from the outcome and improve future decisions",
+              "B. Avoid making decisions",
+              "C. Eliminate all alternatives",
+              "D. Stop collecting information",
+            ],
+            ans: 0,
+            ar_q: "23. تقييم النتائج يساعد المنظمة على:",
+            ar_options: [
+              "أ. التعلم من النتيجة وتحسين القرارات المستقبلية",
+              "ب. تجنب اتخاذ القرارات",
+              "ج. القضاء على كافة البدائل",
+              "د. التوقف عن جمع المعلومات",
+            ],
+            hint: "الاستفادة من الأخطاء والنجاحات.",
+            exp: "التقييم يهدف إلى أخذ الدروس المستفادة وتحسين جودة القرارات في المستقبل.",
+          },
+          {
+            q: "24. Which step comes immediately before executing the decision?",
+            options: [
+              "A. Information Gathering",
+              "B. Evaluation of Alternatives",
+              "C. Select the Best Alternative",
+              "D. Evaluate the Results",
+            ],
+            ans: 2,
+            ar_q: "24. ما هي الخطوة التي تأتي مباشرة قبل تنفيذ القرار؟",
+            ar_options: [
+              "أ. جمع المعلومات",
+              "ب. تقييم البدائل",
+              "ج. اختيار أفضل بديل",
+              "د. تقييم النتائج",
+            ],
+            hint: "يجب أن تختار أولاً قبل أن تنفذ.",
+            exp: "الخطوة 6 هي اختيار البديل الأفضل، والتي تسبق الخطوة 7 (التنفيذ).",
+          },
+          {
+            q: "25. Which sequence correctly represents the beginning of the decision-making process?",
+            options: [
+              "A. Execute → Gather Information → Identify Purpose",
+              "B. Identify Purpose → Gather Information → Establish Principles",
+              "C. Evaluate Results → Execute → Brainstorm",
+              "D. Select Alternative → Gather Information → Execute",
+            ],
+            ans: 1,
+            ar_q: "25. أي تسلسل يمثل بشكل صحيح بداية عملية اتخاذ القرار؟",
+            ar_options: [
+              "أ. التنفيذ ← جمع المعلومات ← تحديد الغرض",
+              "ب. تحديد الغرض ← جمع المعلومات ← وضع المبادئ/المعايير",
+              "ج. تقييم النتائج ← التنفيذ ← العصف الذهني",
+              "د. اختيار البديل ← جمع المعلومات ← التنفيذ",
+            ],
+            hint: "تحديد المشكلة ثم المعلومات ثم المعايير.",
+            exp: "الترتيب الصحيح للبداية: تحديد الهدف (Identify Purpose)، ثم جمع المعلومات (Gather Info)، ثم تحديد المعايير (Establish criteria).",
+          },
+        ],
+        mcq3: [
+          // From q3_without_answers.docx
+          {
+            q: "1. What is the primary purpose of a Decision Support System (DSS)?",
+            options: [
+              "A. To replace all managers",
+              "B. To aid decision-makers in decision-making",
+              "C. To store only employee records",
+              "D. To control computer hardware",
+            ],
+            ans: 1,
+            ar_q: "1. ما هو الغرض الأساسي من نظام دعم اتخاذ القرار (DSS)؟",
+            ar_options: [
+              "أ. استبدال جميع المديرين",
+              "ب. مساعدة صناع القرار في اتخاذ القرارات",
+              "ج. تخزين سجلات الموظفين فقط",
+              "د. للتحكم في أجهزة الكمبيوتر",
+            ],
+            hint: "نظام مصمم للمساعدة وليس الاستبدال.",
+            exp: "كما ذكرنا، الهدف الأساسي هو دعم (Aid) صانع القرار وليس الاستغناء عنه.",
+          },
+          {
+            q: "2. Which types of decision-making situations should DSS address?",
+            options: [
+              "A. Only structured situations",
+              "B. Only routine situations",
+              "C. Semi-structured and unstructured situations",
+              "D. Only financial situations",
+            ],
+            ans: 2,
+            ar_q: "2. ما هي أنواع مواقف اتخاذ القرار التي يجب أن يعالجها DSS؟",
+            ar_options: [
+              "أ. المواقف المهيكلة فقط",
+              "ب. المواقف الروتينية فقط",
+              "ج. المواقف شبه المهيكلة وغير المهيكلة",
+              "د. المواقف المالية فقط",
+            ],
+            hint: "المواقف المعقدة التي تحتاج لتحليل بشري.",
+            exp: "DSS مصمم لخدمة المواقف شبه المهيكلة (Semi-structured) وغير المهيكلة (Unstructured).",
+          },
+          {
+            q: "3. DSS particularly supports decision-makers at which levels?",
+            options: [
+              "A. Operational only",
+              "B. Tactical and strategic",
+              "C. Technical only",
+              "D. Administrative assistants only",
+            ],
+            ans: 1,
+            ar_q: "3. يدعم DSS صناع القرار بشكل خاص في أي مستويات؟",
+            ar_options: [
+              "أ. التشغيلي فقط",
+              "ب. التكتيكي والاستراتيجي",
+              "ج. التقني فقط",
+              "د. المساعدين الإداريين فقط",
+            ],
+            hint: "مستويات الإدارة العليا والوسطى.",
+            exp: "يدعم المستويات الاستراتيجية والتكتيكية (الرقابة الإدارية).",
+          },
+          {
+            q: "4. Which of the following is a desirable characteristic of DSS?",
+            options: [
+              "A. It requires technical professionals for every operation",
+              "B. It cannot adapt to changing requirements",
+              "C. It provides general-purpose models and simulation capabilities",
+              "D. It supports only one management style",
+            ],
+            ans: 2,
+            ar_q: "4. أي مما يلي يُعتبر من الخصائص المرغوبة في DSS؟",
+            ar_options: [
+              "أ. يتطلب متخصصين تقنيين لكل عملية",
+              "ب. لا يمكنه التكيف مع المتطلبات المتغيرة",
+              "ج. يوفر نماذج للأغراض العامة وقدرات محاكاة",
+              "د. يدعم أسلوب إدارة واحد فقط",
+            ],
+            hint: "يحتوي على أدوات رياضية.",
+            exp: "يوفر نماذج رياضية وإحصائية وقدرات محاكاة (Simulation) لدعم التنبؤ والتحليل.",
+          },
+          {
+            q: "5. DSS should enable users to operate the system without assistance from:",
+            options: [
+              "A. Customers",
+              "B. MIS or technical professionals",
+              "C. Suppliers",
+              "D. Employees in all departments",
+            ],
+            ans: 1,
+            ar_q: "5. يجب أن يُمكن DSS المستخدمين من تشغيل النظام دون مساعدة من:",
+            ar_options: [
+              "أ. العملاء",
+              "ب. محترفي نظم المعلومات أو التقنيين",
+              "ج. الموردين",
+              "د. الموظفين في جميع الأقسام",
+            ],
+            hint: "يجب أن يكون النظام سهل الاستخدام للمدير مباشرة.",
+            exp: "من خصائص DSS أن يكون سهل الاستخدام (User-friendly) لدرجة أن المدير لا يحتاج لمتخصص حاسوب لتشغيله في كل مرة.",
+          },
+          {
+            q: "6. Why should DSS be flexible?",
+            options: [
+              "A. To accommodate different management styles",
+              "B. To eliminate all organizational databases",
+              "C. To prevent users from making decisions",
+              "D. To avoid analytical tools",
+            ],
+            ans: 0,
+            ar_q: "6. لماذا يجب أن يكون DSS مرناً؟",
+            ar_options: [
+              "أ. لاستيعاب أساليب الإدارة المختلفة",
+              "ب. للقضاء على جميع قواعد البيانات التنظيمية",
+              "ج. لمنع المستخدمين من اتخاذ القرارات",
+              "د. لتجنب الأدوات التحليلية",
+            ],
+            hint: "كل مدير لديه طريقة تفكير مختلفة.",
+            exp: "المرونة مطلوبة لتلائم أساليب وأنماط الإدارة المتنوعة للمديرين (Different management styles).",
+          },
+          {
+            q: "7. Which feature allows DSS to respond quickly to information requests?",
+            options: [
+              "A. A mechanism for rapid response",
+              "B. A fixed reporting schedule only",
+              "C. Manual data entry exclusively",
+              "D. Restricted user access",
+            ],
+            ans: 0,
+            ar_q: "7. ما الميزة التي تتيح لـ DSS الاستجابة السريعة لطلبات المعلومات؟",
+            ar_options: [
+              "أ. آلية للاستجابة السريعة",
+              "ب. جدول تقارير ثابت فقط",
+              "ج. إدخال البيانات يدوياً حصراً",
+              "د. وصول مقيد للمستخدم",
+            ],
+            hint: "النظام مصمم ليكون تفاعلياً ولحظياً.",
+            exp: "يحتوي DSS على آلية للاستجابة السريعة (Rapid response) للمتغيرات والأحداث الطارئة.",
+          },
+          {
+            q: "8. DSS should have the capability to interface with the:",
+            options: [
+              "A. Corporate database",
+              "B. Keyboard only",
+              "C. Printer only",
+              "D. Operating system only",
+            ],
+            ans: 0,
+            ar_q: "8. يجب أن يتمتع DSS بالقدرة على التفاعل مع:",
+            ar_options: [
+              "أ. قاعدة بيانات الشركة",
+              "ب. لوحة المفاتيح فقط",
+              "ج. الطابعة فقط",
+              "د. نظام التشغيل فقط",
+            ],
+            hint: "من أين يحصل على المعلومات الداخلية؟",
+            exp: "يجب أن يرتبط بقاعدة بيانات الشركة (Corporate database) لاستخراج البيانات اللازمة للتحليل.",
+          },
+          {
+            q: "9. Which method is recommended for DSS according to the lecture?",
+            options: [
+              "A. Interactive methods",
+              "B. Manual methods only",
+              "C. Non-interactive methods exclusively",
+              "D. Paper-based methods only",
+            ],
+            ans: 0,
+            ar_q: "9. ما هي الطريقة الموصى بها لـ DSS وفقاً للمحاضرة؟",
+            ar_options: [
+              "أ. الأساليب التفاعلية",
+              "ب. الأساليب اليدوية فقط",
+              "ج. الأساليب غير التفاعلية حصراً",
+              "د. الأساليب الورقية فقط",
+            ],
+            hint: "التفاعل بين المدير والنظام.",
+            exp: "يُبنى DSS على الأساليب التفاعلية (Interactive) عبر واجهة مستخدم سهلة.",
+          },
+          {
+            q: "10. How many main components does a DSS consist of?",
+            options: ["A. Two", "B. Three", "C. Four", "D. Five"],
+            ans: 1,
+            ar_q: "10. كم عدد المكونات الرئيسية التي يتكون منها DSS؟",
+            ar_options: ["أ. اثنان", "ب. ثلاثة", "ج. أربعة", "د. خمسة"],
+            hint: "بيانات، نماذج، وواجهة.",
+            exp: "يتكون من 3 مكونات رئيسية (Three components).",
+          },
+          {
+            q: "11. Which of the following is a main component of DSS?",
+            options: [
+              "A. Database",
+              "B. Software system",
+              "C. User interface",
+              "D. All of the above",
+            ],
+            ans: 3,
+            ar_q: "11. أي مما يلي هو مكون رئيسي لـ DSS؟",
+            ar_options: [
+              "أ. قاعدة البيانات",
+              "ب. نظام البرمجيات (النماذج)",
+              "ج. واجهة المستخدم",
+              "د. جميع ما سبق",
+            ],
+            hint: "كلها أجزاء أساسية.",
+            exp: "جميع المذكورة أعلاه (All of the above) هي المكونات الثلاثة لـ DSS.",
+          },
+          {
+            q: "12. What does the DSS database contain?",
+            options: [
+              "A. Only external data",
+              "B. Only employee information",
+              "C. Data from internal, application, and external sources",
+              "D. Only statistical formulas",
+            ],
+            ans: 2,
+            ar_q: "12. ماذا تحتوي قاعدة بيانات DSS؟",
+            ar_options: [
+              "أ. بيانات خارجية فقط",
+              "ب. معلومات الموظفين فقط",
+              "ج. بيانات من مصادر داخلية وتطبيقية وخارجية",
+              "د. صيغ إحصائية فقط",
+            ],
+            hint: "تجمع كل البيانات المتاحة.",
+            exp: "تحتوي على بيانات شاملة من مصادر داخلية وخارجية وتطبيقات المؤسسة المختلفة.",
+          },
+          {
+            q: "13. Why does the DSS database usually contain a copy of the production database?",
+            options: [
+              "A. To increase the number of employees",
+              "B. To avoid interference with operational systems",
+              "C. To remove analytical models",
+              "D. To eliminate the user interface",
+            ],
+            ans: 1,
+            ar_q: "13. لماذا تحتوي قاعدة بيانات DSS عادةً على نسخة من قاعدة بيانات الإنتاج؟",
+            ar_options: [
+              "أ. لزيادة عدد الموظفين",
+              "ب. لتجنب التدخل مع الأنظمة التشغيلية",
+              "ج. لإزالة النماذج التحليلية",
+              "د. لإلغاء واجهة المستخدم",
+            ],
+            hint: "حتى لا يتم إبطاء العمل اليومي.",
+            exp: "يُستخدم نسخة مستنسخة لضمان عدم إبطاء أو التأثير سلباً على أنظمة المعاملات اليومية (Operational systems).",
+          },
+          {
+            q: "14. What is the primary function of the DSS software system?",
+            options: [
+              "A. To analyze complex data using mathematical and analytical models",
+              "B. To manufacture computer equipment",
+              "C. To manage office furniture",
+              "D. To replace the database completely",
+            ],
+            ans: 0,
+            ar_q: "14. ما هي الوظيفة الأساسية لنظام برمجيات DSS (قاعدة النماذج)؟",
+            ar_options: [
+              "أ. تحليل البيانات المعقدة باستخدام نماذج رياضية وتحليلية",
+              "ب. تصنيع معدات الكمبيوتر",
+              "ج. إدارة أثاث المكاتب",
+              "د. استبدال قاعدة البيانات بالكامل",
+            ],
+            hint: "تطبيق المعادلات.",
+            exp: "تُستخدم قاعدة النماذج (Software system) لمعالجة وتحليل البيانات باستخدام نماذج رياضية وإحصائية.",
+          },
+          {
+            q: "15. What does a model do in a DSS?",
+            options: [
+              "A. Stores passwords only",
+              "B. Predicts outputs based on inputs or conditions",
+              "C. Prevents data analysis",
+              "D. Replaces all users",
+            ],
+            ans: 1,
+            ar_q: "15. ماذا يفعل النموذج (Model) في DSS؟",
+            ar_options: [
+              "أ. يخزن كلمات المرور فقط",
+              "ب. يتوقع المخرجات بناءً على المدخلات أو الظروف",
+              "ج. يمنع تحليل البيانات",
+              "د. يستبدل جميع المستخدمين",
+            ],
+            hint: "يحول البيانات إلى توقعات.",
+            exp: "النموذج يعالج المدخلات الرياضية ويتوقع النتائج (Predicts outputs) بناءً على شروط معينة.",
+          },
+          {
+            q: "16. The selection of models included in a DSS depends primarily on:",
+            options: [
+              "A. The color of the interface",
+              "B. User requirements and the purposes of DSS",
+              "C. The number of computer monitors",
+              "D. The organization's location",
+            ],
+            ans: 1,
+            ar_q: "16. يعتمد اختيار النماذج المدرجة في DSS بشكل أساسي على:",
+            ar_options: [
+              "أ. لون الواجهة",
+              "ب. متطلبات المستخدم وأغراض نظام DSS",
+              "ج. عدد شاشات الكمبيوتر",
+              "د. موقع المنظمة",
+            ],
+            hint: "كل نظام يُصمم حسب الحاجة.",
+            exp: "اختيار النماذج يتم بناءً على المتطلبات والغرض من بناء النظام (User requirements).",
+          },
+          {
+            q: "17. Which of the following is an example of a statistical function?",
+            options: ["A. Mean", "B. Median", "C. Mode", "D. All of the above"],
+            ans: 3,
+            ar_q: "17. أي مما يلي يعد مثالاً على وظيفة إحصائية؟",
+            ar_options: [
+              "أ. المتوسط (Mean)",
+              "ب. الوسيط (Median)",
+              "ج. المنوال (Mode)",
+              "د. جميع ما سبق",
+            ],
+            hint: "دوال إحصائية شهيرة.",
+            exp: "جميع المذكورة هي دوال إحصائية أساسية مستخدمة في تحليل البيانات.",
+          },
+          {
+            q: "18. Statistical models can help establish relationships between:",
+            options: [
+              "A. Events and their related factors",
+              "B. Computers and keyboards only",
+              "C. Employees and office furniture",
+              "D. Printers and monitors only",
+            ],
+            ans: 0,
+            ar_q: "18. يمكن أن تساعد النماذج الإحصائية في إنشاء علاقات بين:",
+            ar_options: [
+              "أ. الأحداث والعوامل المرتبطة بها",
+              "ب. أجهزة الكمبيوتر ولوحات المفاتيح فقط",
+              "ج. الموظفين وأثاث المكاتب",
+              "د. الطابعات والشاشات فقط",
+            ],
+            hint: "العلاقة بين السبب والنتيجة.",
+            exp: "تُستخدم للإشارة للارتباط بين الأحداث (Events) والعوامل التي أثرت فيها.",
+          },
+          {
+            q: "19. What is the main purpose of sensitivity analysis models?",
+            options: [
+              "A. To examine the effects of changing one variable on other variables",
+              "B. To delete the database",
+              "C. To prevent changes in business conditions",
+              "D. To design a user interface",
+            ],
+            ans: 0,
+            ar_q: "19. ما هو الغرض الرئيسي لنماذج تحليل الحساسية؟",
+            ar_options: [
+              "أ. فحص آثار تغيير متغير واحد على المتغيرات الأخرى",
+              "ب. لحذف قاعدة البيانات",
+              "ج. لمنع التغييرات في ظروف العمل",
+              "د. لتصميم واجهة مستخدم",
+            ],
+            hint: "ماذا لو تغير السعر؟ كيف تتأثر الأرباح؟",
+            exp: "تحليل الحساسية يدرس تأثير التغيير المتكرر لمتغير واحد على باقي المتغيرات.",
+          },
+          {
+            q: "20. Which question is commonly associated with sensitivity analysis?",
+            options: [
+              "A. What-if?",
+              "B. Who logged in?",
+              "C. Where is the printer?",
+              "D. Which keyboard is connected?",
+            ],
+            ans: 0,
+            ar_q: "20. ما السؤال المرتبط عادةً بتحليل الحساسية؟",
+            ar_options: [
+              "أ. ماذا لو؟ (What-if)",
+              "ب. من قام بتسجيل الدخول؟",
+              "ج. أين الطابعة؟",
+              "د. أي لوحة مفاتيح متصلة؟",
+            ],
+            hint: "افتراض تغير الظروف.",
+            exp: "يُعرف تحليل الحساسية بـ What-if Analysis (ماذا لو).",
+          },
+          {
+            q: "21. In sensitivity analysis, what happens during the analysis?",
+            options: [
+              "A. All variables are permanently fixed",
+              "B. One variable is repeatedly changed and the effects on other variables are observed",
+              "C. The database is deleted",
+              "D. The software is uninstalled",
+            ],
+            ans: 1,
+            ar_q: "21. في تحليل الحساسية، ماذا يحدث أثناء التحليل؟",
+            ar_options: [
+              "أ. جميع المتغيرات ثابتة بشكل دائم",
+              "ب. يتم تغيير متغير واحد بشكل متكرر وملاحظة آثاره على المتغيرات الأخرى",
+              "ج. يتم حذف قاعدة البيانات",
+              "د. يتم إلغاء تثبيت البرنامج",
+            ],
+            hint: "تغيير لمراقبة الأثر.",
+            exp: "نقوم بتغيير قيمة أحد المتغيرات (مثلاً السعر) لملاحظة أثر ذلك على المتغيرات الأخرى (مثلاً الربح).",
+          },
+          {
+            q: "22. Which tools are mentioned in the lecture for sensitivity analysis?",
+            options: [
+              "A. Microsoft Word and PowerPoint",
+              "B. Excel spreadsheets and Lotus 1-2-3",
+              "C. Paint and Notepad",
+              "D. Web browsers only",
+            ],
+            ans: 1,
+            ar_q: "22. ما الأدوات المذكورة في المحاضرة لتحليل الحساسية؟",
+            ar_options: [
+              "أ. Microsoft Word و PowerPoint",
+              "ب. جداول بيانات Excel و Lotus 1-2-3",
+              "ج. Paint و Notepad",
+              "د. متصفحات الويب فقط",
+            ],
+            hint: "برامج الجداول الحسابية.",
+            exp: "تُستخدم الجداول الإلكترونية مثل MS Excel وبرنامج Lotus 1-2-3 بكثرة لإجراء هذه التحليلات.",
+          },
+          {
+            q: "23. What is the primary purpose of optimization analysis models?",
+            options: [
+              "A. To find the optimum value for a target variable under given circumstances",
+              "B. To store raw data only",
+              "C. To create graphical user interfaces",
+              "D. To prevent resource allocation",
+            ],
+            ans: 0,
+            ar_q: "23. ما هو الغرض الأساسي لنماذج تحليل التحسين (Optimization)؟",
+            ar_options: [
+              "أ. العثور على القيمة المثلى لمتغير مستهدف في ظل ظروف معينة",
+              "ب. لتخزين البيانات الأولية فقط",
+              "ج. لإنشاء واجهات مستخدم رسومية",
+              "د. لمنع تخصيص الموارد",
+            ],
+            hint: "البحث عن أفضل نتيجة ممكنة.",
+            exp: "الهدف هو البحث عن القيمة المثلى (Optimum value) سواء لتعظيم الأرباح أو تقليل التكاليف ضمن قيود محددة.",
+          },
+          {
+            q: "24. Optimization analysis is widely used for decisions related to:",
+            options: [
+              "A. Optimum utilization of organizational resources",
+              "B. Computer screen resolution",
+              "C. Email formatting",
+              "D. Website colors",
+            ],
+            ans: 0,
+            ar_q: "24. يُستخدم تحليل التحسين على نطاق واسع في القرارات المتعلقة بـ:",
+            ar_options: [
+              "أ. الاستخدام الأمثل لموارد المنظمة",
+              "ب. دقة شاشة الكمبيوتر",
+              "ج. تنسيق البريد الإلكتروني",
+              "د. ألوان الموقع الإلكتروني",
+            ],
+            hint: "الاستفادة القصوى من المتاح.",
+            exp: "يُستخدم لتعظيم الاستفادة والاستخدام الأمثل (Optimum utilization) للموارد المحدودة في المؤسسة.",
+          },
+          {
+            q: "25. During optimization analysis, variables are changed repeatedly while considering:",
+            options: [
+              "A. Specific constraints",
+              "B. Font sizes",
+              "C. Screen brightness",
+              "D. Usernames only",
+            ],
+            ans: 0,
+            ar_q: "25. أثناء تحليل التحسين، يتم تغيير المتغيرات بشكل متكرر مع الأخذ في الاعتبار:",
+            ar_options: [
+              "أ. قيود محددة (Constraints)",
+              "ب. أحجام الخطوط",
+              "ج. سطوع الشاشة",
+              "د. أسماء المستخدمين فقط",
+            ],
+            hint: "الموارد ليست غير محدودة.",
+            exp: "يجب الأخذ في الاعتبار القيود (Constraints) مثل سعة الآلات أو الميزانية للوصول للحل الأمثل.",
+          },
+          {
+            q: "26. Which technique is commonly used for optimization analysis?",
+            options: [
+              "A. Linear programming",
+              "B. Word processing",
+              "C. Image editing",
+              "D. Email filtering",
+            ],
+            ans: 0,
+            ar_q: "26. ما التقنية المستخدمة بشكل شائع لتحليل التحسين؟",
+            ar_options: [
+              "أ. البرمجة الخطية",
+              "ب. معالجة الكلمات",
+              "ج. تحرير الصور",
+              "د. تصفية البريد الإلكتروني",
+            ],
+            hint: "تقنية رياضية في بحوث العمليات.",
+            exp: "البرمجة الخطية (Linear programming) هي من أشهر الأساليب الرياضية للوصول للتحسين الأمثل.",
+          },
+          {
+            q: "27. Which Microsoft Excel tool is mentioned for optimization analysis?",
+            options: [
+              "A. Spell Check",
+              "B. Solver",
+              "C. WordArt",
+              "D. Mail Merge",
+            ],
+            ans: 1,
+            ar_q: "27. ما أداة Microsoft Excel المذكورة لتحليل التحسين؟",
+            ar_options: [
+              "أ. التدقيق الإملائي",
+              "ب. أداة Solver",
+              "ج. WordArt",
+              "د. دمج المراسلات",
+            ],
+            hint: "أداة لحل المعادلات.",
+            exp: "تعتبر إضافة Solver في الإكسيل هي الأداة المخصصة لتطبيقات التحسين والبرمجة الخطية.",
+          },
+          {
+            q: "28. In the lecture's production example, optimization can determine the highest production level by varying:",
+            options: [
+              "A. Job assignments to workers",
+              "B. Computer screen sizes",
+              "C. Database colors",
+              "D. Office locations only",
+            ],
+            ans: 0,
+            ar_q: "28. في مثال الإنتاج بالمحاضرة، يمكن للتحسين تحديد أعلى مستوى إنتاج عن طريق تغيير:",
+            ar_options: [
+              "أ. تعيينات الوظائف للعمال",
+              "ب. أحجام شاشة الكمبيوتر",
+              "ج. ألوان قاعدة البيانات",
+              "د. مواقع المكاتب فقط",
+            ],
+            hint: "توزيع المهام.",
+            exp: "يمكن تعظيم الإنتاج عبر التوزيع الأفضل والمهام المخصصة للعمال (Job assignments).",
+          },
+        ],
+        tf: [
+          // From q4 True/False
+          {
+            q: "1. Forecasting models are used to predict future events or conditions.",
+            ans: true,
+            ar_q: "1. تُستخدم نماذج التنبؤ للتنبؤ بالأحداث أو الظروف المستقبلية.",
+            hint: "من اسمها 'تنبؤ'.",
+            exp: "العبارة صحيحة. نماذج التنبؤ (Forecasting) تُستخدم لتوقع المستقبل.",
+          },
+          {
+            q: "2. Forecasting models use regression models, time series analysis, and market research methods.",
+            ans: true,
+            ar_q: "2. تستخدم نماذج التنبؤ نماذج الانحدار وتحليل السلاسل الزمنية وطرق أبحاث السوق.",
+            hint: "الأساليب الإحصائية للتنبؤ.",
+            exp: "العبارة صحيحة. هذه هي الأدوات الرياضية التي تعتمد عليها نماذج التنبؤ.",
+          },
+          {
+            q: "3. Forecasting models are never used to forecast sales.",
+            ans: false,
+            reason: "They ARE used to forecast sales.",
+            ar_q: "3. لا تُستخدم نماذج التنبؤ أبدًا للتنبؤ بالمبيعات.",
+            hint: "التنبؤ بالمبيعات هو أهم استخدام لها.",
+            exp: "العبارة خاطئة. من أهم استخدامات نماذج التنبؤ هو التنبؤ بالمبيعات (Forecasting sales).",
+          },
+          {
+            q: "4. Goal-seeking analysis is another name for backward sensitivity analysis.",
+            ans: true,
+            ar_q: "4. تحليل السعي وراء الهدف (Goal-seeking) هو اسم آخر لتحليل الحساسية العكسي.",
+            hint: "تبدأ من النتيجة لتعرف المدخلات.",
+            exp: "العبارة صحيحة. يبدأ هذا التحليل بتحديد الهدف (النتيجة) ثم يغير المتغيرات للوصول له، ويسمى بالتحليل العكسي.",
+          },
+          {
+            q: "5. Goal-seeking analysis changes one variable repeatedly to observe its effects on other variables.",
+            ans: false,
+            reason:
+              "This describes What-if sensitivity analysis, not Goal-seeking.",
+            ar_q: "5. يقوم تحليل السعي وراء الهدف بتغيير متغير واحد بشكل متكرر لملاحظة آثاره على المتغيرات الأخرى.",
+            hint: "هذا تعريف تحليل What-if.",
+            exp: "العبارة خاطئة. هذا الوصف ينطبق على تحليل الحساسية العادي (What-if) وليس السعي للهدف (Goal-seeking).",
+          },
+          {
+            q: "6. Goal-seeking analysis sets a target value and changes other variables until the target is achieved.",
+            ans: true,
+            ar_q: "6. يحدد تحليل السعي للهدف قيمة مستهدفة ويغير المتغيرات الأخرى حتى يتحقق الهدف.",
+            hint: "تحدد النتيجة أولاً.",
+            exp: "العبارة صحيحة. يتم تثبيت الهدف النهائي، ويقوم النظام بحساب المتغيرات اللازمة لتحقيقه.",
+          },
+          {
+            q: "7. Backward sensitivity analysis can be used to determine the resources required to increase production by 40%.",
+            ans: true,
+            ar_q: "7. يمكن استخدام تحليل الحساسية العكسي لتحديد الموارد اللازمة لزيادة الإنتاج بنسبة 40%.",
+            hint: "زيادة 40% هي 'هدف'.",
+            exp: "العبارة صحيحة. بما أننا حددنا الهدف النهائي (زيادة 40%) ونريد معرفة المتطلبات (الموارد)، فهذا تطبيق مباشر للتحليل العكسي.",
+          },
+          {
+            q: "8. The DSS user interface makes interaction between the DSS and its users more difficult.",
+            ans: false,
+            reason: "It facilitates interaction and makes it easier.",
+            ar_q: "8. واجهة مستخدم DSS تجعل التفاعل بين النظام ومستخدميه أكثر صعوبة.",
+            hint: "الواجهة صُممت للتسهيل.",
+            exp: "العبارة خاطئة. واجهة المستخدم مصممة خصيصاً لتسهيل (Facilitate) وجعل التفاعل بسيطاً وبديهياً.",
+          },
+          {
+            q: "9. A DSS user interface can display results using text, tables, charts, and graphics.",
+            ans: true,
+            ar_q: "9. يمكن لواجهة مستخدم DSS عرض النتائج باستخدام النصوص والجداول والمخططات والرسومات.",
+            hint: "أشكال عرض متعددة.",
+            exp: "العبارة صحيحة. النظام يوفر مرونة في عرض المخرجات لكي تتناسب مع تفضيلات المدير.",
+          },
+          {
+            q: "10. All DSS users must view analytical results in the same format.",
+            ans: false,
+            reason:
+              "Interfaces are flexible and customizable based on user preference.",
+            ar_q: "10. يجب على جميع مستخدمي DSS عرض النتائج التحليلية بنفس التنسيق.",
+            hint: "الأنظمة مرنة ولا تجبر المستخدم.",
+            exp: "العبارة خاطئة. واجهات DSS مرنة وقابلة للتخصيص (Customizable) وكل مدير يمكنه عرض النتائج بالشكل الذي يفضله.",
+          },
+          {
+            q: "11. A manager may prefer to view comparative sales data in tabular form.",
+            ans: true,
+            ar_q: "11. قد يفضل المدير عرض بيانات المبيعات المقارنة في شكل جدولي.",
+            hint: "كل مدير له تفضيل.",
+            exp: "العبارة صحيحة. بفضل مرونة واجهة المستخدم، يمكن عرض البيانات كجداول أو رسومات بيانية حسب رغبة المدير.",
+          },
+          {
+            q: "12. Web-based DSS interfaces can provide customization and personalization.",
+            ans: true,
+            ar_q: "12. يمكن أن توفر واجهات DSS القائمة على الويب التخصيص وإضفاء الطابع الشخصي.",
+            hint: "الويب يتيح إمكانيات برمجية هائلة.",
+            exp: "العبارة صحيحة. الواجهات عبر الويب تسمح بتخصيص لوحات القيادة (Dashboards) لكل مستخدم.",
+          },
+          {
+            q: "13. Clinical decision support systems can be used for medical diagnosis.",
+            ans: true,
+            ar_q: "13. يمكن استخدام أنظمة دعم القرار السريري في التشخيص الطبي.",
+            hint: "تطبيق في المجال الطبي.",
+            exp: "العبارة صحيحة. هناك أنظمة مخصصة لدعم قرارات الأطباء وتسهيل عمليات التشخيص والعلاج.",
+          },
+        ],
+        essay: [
+          // From q4 Essay
+          {
+            q: "14. WRITE Benefits of DSS",
+            ans: "- Improves quality of decisions in complex situations.<br>- Speeds up decision-making process.<br>- Encourages learning and exploration.<br>- Improves communication and collaboration among managers.<br>- Optimizes the use of organizational resources.",
+            ar_q: "14. اكتب فوائد نظام دعم اتخاذ القرار (DSS)",
+            ar_ans:
+              "- يحسن جودة القرارات في المواقف المعقدة.<br>- يسرع عملية اتخاذ القرار.<br>- يشجع على التعلم والاستكشاف.<br>- يحسن التواصل والتعاون بين المديرين.<br>- يحسن الاستخدام الأمثل لموارد المنظمة.",
+            hint: "فكر في السرعة، الجودة، والموارد.",
+          },
+          {
+            q: "15. MENTION Advantages of Decision Support Systems (DSS)",
+            ans: "- Saves time and effort in planning.<br>- Processes large volumes of data quickly.<br>- Provides interactive visual reports.<br>- Enhances managers' strategic control.<br>- Adaptable to different management styles.",
+            ar_q: "15. اذكر مميزات نظم دعم اتخاذ القرار (DSS)",
+            ar_ans:
+              "- يوفر الوقت والجهد في التخطيط.<br>- يعالج كميات كبيرة من البيانات بسرعة.<br>- يوفر تقارير مرئية تفاعلية.<br>- يعزز الرقابة الاستراتيجية للمديرين.<br>- قابل للتكيف مع أساليب الإدارة المختلفة.",
+            hint: "يتعلق بالبيانات الضخمة والتقارير المرئية.",
+          },
+          {
+            q: "16. MENTION Disadvantages of Decision Support Systems (DSS)",
+            ans: "- High cost of development and maintenance.<br>- Over-reliance on technology may reduce human judgment.<br>- Risk of 'Information Overload'.<br>- Vulnerable to 'Garbage in, Garbage out' if raw data is inaccurate.",
+            ar_q: "16. اذكر عيوب نظم دعم اتخاذ القرار (DSS)",
+            ar_ans:
+              "- التكلفة العالية للتطوير والصيانة.<br>- الاعتماد المفرط على التكنولوجيا قد يقلل من الحكم البشري.<br>- خطر 'الحمل الزائد للمعلومات'.<br>- عرضة لمبدأ 'البيانات الخاطئة تعطي نتائج خاطئة' (Garbage in, Garbage out).",
+            hint: "التكلفة، والاعتماد المفرط.",
+          },
+          {
+            q: "17. Mention desirable characteristics of DSS",
+            ans: "- Supports semi-structured and unstructured situations.<br>- Flexible and user-friendly.<br>- Quick response to user requests.<br>- Provides analytical and mathematical models.<br>- Operable by managers without needing constant technical assistance.",
+            ar_q: "17. اذكر الخصائص المرغوبة في DSS",
+            ar_ans:
+              "- يدعم المواقف شبه المهيكلة وغير المهيكلة.<br>- مرن وسهل الاستخدام.<br>- استجابة سريعة لطلبات المستخدمين.<br>- يوفر نماذج تحليلية ورياضية.<br>- قابل للتشغيل من قبل المديرين دون الحاجة إلى مساعدة فنية مستمرة.",
+            hint: "المرونة، السرعة، والسهولة.",
+          },
+          {
+            q: "18. what is Component of DSS",
+            ans: "<b>1. Database:</b> Contains internal, external, and application data (usually a copy of the production database).<br><b>2. Model Base (Software System):</b> Contains mathematical and analytical models (e.g., forecasting, sensitivity analysis).<br><b>3. User Interface:</b> Allows interaction between the user and the system using texts, tables, and graphics.",
+            ar_q: "18. ما هي مكونات DSS؟",
+            ar_ans:
+              "<b>1. قاعدة البيانات (Database):</b> تحتوي على بيانات داخلية وخارجية وتطبيقية (عادة ما تكون نسخة من قاعدة بيانات الإنتاج).<br><b>2. قاعدة النماذج / نظام البرمجيات (Model Base):</b> تحتوي على النماذج الرياضية والتحليلية (مثل التنبؤ، تحليل الحساسية).<br><b>3. واجهة المستخدم (User Interface):</b> تسمح بالتفاعل بين المستخدم والنظام باستخدام النصوص والجداول والرسومات.",
+            hint: "بيانات، نماذج، واجهة.",
+          },
+          {
+            q: "19. Mention important steps of DSS making (Decision Making Process)",
+            ans: "1. Identify the purpose of the decision.<br>2. Gather Information.<br>3. Establish Baseline criteria.<br>4. Brainstorm / Generate Alternatives.<br>5. Evaluate Alternatives.<br>6. Select the Best Alternative.<br>7. Execute the Decision.<br>8. Evaluate the Results.",
+            ar_q: "19. اذكر الخطوات الهامة لعملية اتخاذ القرار (Decision Making Process)",
+            ar_ans:
+              "1. تحديد الغرض من القرار.<br>2. جمع المعلومات.<br>3. وضع المعايير الأساسية.<br>4. العصف الذهني / توليد البدائل.<br>5. تقييم البدائل.<br>6. اختيار البديل الأفضل.<br>7. تنفيذ القرار.<br>8. تقييم النتائج.",
+            hint: "8 خطوات تبدأ بتحديد الهدف وتنتهي بتقييم النتائج.",
+          },
+        ],
+      };
+
+      // State variables
+      let currentTab = "mcq1";
+      let scores = { mcq1: 0, mcq2: 0, mcq3: 0, tf: 0 };
+      let answered = {
+        mcq1: new Set(),
+        mcq2: new Set(),
+        mcq3: new Set(),
+        tf: new Set(),
+      };
+      let translationState = {}; // { 'mcq1-0': true (isArabic) }
+      let userChoices = {}; // { 'mcq1-0': 2, 'essay-ans-essay-0': true } - Stores chosen options & UI states
+
+      // Initialization
+      window.onload = () => {
+        loadState(); // Load saved state from sessionStorage
+        switchTab("mcq1");
+        updateScoreDisplay();
+      };
+
+      function saveState() {
+        const state = {
+          scores: scores,
+          answered: {
+            mcq1: Array.from(answered.mcq1),
+            mcq2: Array.from(answered.mcq2),
+            mcq3: Array.from(answered.mcq3),
+            tf: Array.from(answered.tf),
+          },
+          userChoices: userChoices,
+          translationState: translationState,
+        };
+        sessionStorage.setItem("dssQuizState", JSON.stringify(state));
+      }
+
+      function loadState() {
+        const saved = sessionStorage.getItem("dssQuizState");
+        if (saved) {
+          try {
+            const state = JSON.parse(saved);
+            scores = state.scores || { mcq1: 0, mcq2: 0, mcq3: 0, tf: 0 };
+            answered = {
+              mcq1: new Set(state.answered?.mcq1 || []),
+              mcq2: new Set(state.answered?.mcq2 || []),
+              mcq3: new Set(state.answered?.mcq3 || []),
+              tf: new Set(state.answered?.tf || []),
+            };
+            userChoices = state.userChoices || {};
+            translationState = state.translationState || {};
+          } catch (e) {
+            console.error("Error loading state", e);
+          }
+        }
+      }
+
+      function switchTab(tabId) {
+        currentTab = tabId;
+        document.querySelectorAll(".tab-btn").forEach((btn) => {
+          btn.classList.remove("bg-blue-100", "text-blue-800");
+          btn.classList.add("text-gray-600");
+        });
+        const activeBtn = document.getElementById(`tab-${tabId}`);
+        if (activeBtn) {
+          activeBtn.classList.remove("text-gray-600");
+          activeBtn.classList.add("bg-blue-100", "text-blue-800");
+        }
+        renderContent(tabId);
+      }
+
+      function renderContent(tabId) {
+        const container = document.getElementById("quiz-container");
+        container.innerHTML = "";
+
+        // 1. Render all HTML structures first
+        db[tabId].forEach((item, index) => {
+          if (tabId.startsWith("mcq"))
+            container.appendChild(createMCQCard(item, index, tabId));
+          else if (tabId === "tf")
+            container.appendChild(createTFCard(item, index, tabId));
+          else if (tabId === "essay")
+            container.appendChild(createEssayCard(item, index, tabId));
+        });
+
+        // 2. Restore Visual State (Answers, Translations, Visibilities)
+        db[tabId].forEach((item, index) => {
+          const id = `${tabId}-${index}`;
+
+          // Restore Translation if it was active
+          if (translationState[id]) {
+            applyTranslation(tabId, index);
+          }
+
+          // Restore Answers
+          if (answered[tabId] && answered[tabId].has(index)) {
+            const savedVal = userChoices[id];
+            if (tabId.startsWith("mcq")) {
+              applyMCQFeedback(tabId, index, savedVal, item.ans);
+            } else if (tabId === "tf") {
+              applyTFFeedback(tabId, index, savedVal, item.ans);
+            }
+          }
+
+          // Restore Essay visibility
+          if (tabId === "essay") {
+            const essayAnsId = `essay-ans-${id}`;
+            if (userChoices[essayAnsId]) {
+              const el = document.getElementById(essayAnsId);
+              if (el) {
+                el.classList.remove("hidden");
+                el.setAttribute("data-visible", "true");
+              }
+            }
+          }
+        });
+      }
+
+      function toggleTranslation(tabId, index) {
+        const id = `${tabId}-${index}`;
+        translationState[id] = !translationState[id]; // Toggle value
+        saveState(); // Save to memory
+        applyTranslation(tabId, index); // Update UI
+      }
+
+      function applyTranslation(tabId, index) {
+        const id = `${tabId}-${index}`;
+        const isAr = translationState[id];
+
+        const qEl = document.getElementById(`q-text-${id}`);
+        if (!qEl) return;
+        const item = db[tabId][index];
+
+        // Toggle Question Text
+        qEl.innerHTML = isAr ? item.ar_q : item.q;
+        qEl.className = isAr
+          ? "text-lg font-bold text-gray-800 mb-4 ar-text"
+          : "text-lg font-bold text-gray-800 mb-4 en-text";
+
+        // Toggle Options
+        if (tabId.startsWith("mcq")) {
+          item.options.forEach((opt, oIdx) => {
+            const btn = document.getElementById(`btn-${id}-${oIdx}`);
+            if (btn) {
+              btn.innerText = isAr ? item.ar_options[oIdx] : opt;
+              if (isAr) {
+                btn.classList.remove("en-text");
+                btn.classList.add("ar-text");
+              } else {
+                btn.classList.remove("ar-text");
+                btn.classList.add("en-text");
+              }
+            }
+          });
+        } else if (tabId === "tf") {
+          const btnT = document.getElementById(`btn-${id}-true`);
+          const btnF = document.getElementById(`btn-${id}-false`);
+          if (btnT) btnT.innerText = isAr ? "صح (True)" : "True (صح)";
+          if (btnF) btnF.innerText = isAr ? "خطأ (False)" : "False (خطأ)";
+        } else if (tabId === "essay") {
+          const ansEl = document.getElementById(`essay-ans-${id}`);
+          if (ansEl) {
+            ansEl.innerHTML = isAr ? item.ar_ans : item.ans;
+            ansEl.className = isAr
+              ? "mt-2 p-4 bg-blue-50 border-r-4 border-blue-500 rounded-l-md text-gray-800 leading-relaxed ar-text"
+              : "mt-2 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-md text-gray-800 leading-relaxed en-text text-left";
+            // Respect visibility state
+            if (ansEl.getAttribute("data-visible") !== "true")
+              ansEl.classList.add("hidden");
+          }
+        }
+      }
+
+      function toggleHint(tabId, index) {
+        const hintEl = document.getElementById(`hint-${tabId}-${index}`);
+        hintEl.classList.toggle("hidden");
+      }
+
+      function getControlButtons(tabId, index) {
+        return `
+                <div class="flex justify-end space-x-2 space-x-reverse mb-4">
+                    <button onclick="toggleHint('${tabId}', ${index})" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 rounded text-sm font-semibold transition-colors">💡 تلميح</button>
+                    <button onclick="toggleTranslation('${tabId}', ${index})" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded text-sm font-semibold transition-colors">🌐 ترجمة</button>
+                </div>
+            `;
+      }
+
+      function createMCQCard(item, index, tabId) {
+        const card = document.createElement("div");
+        card.className =
+          "bg-white p-6 rounded-xl shadow-sm border border-gray-100 fade-in";
+
+        let html = getControlButtons(tabId, index);
+        html += `<h3 id="q-text-${tabId}-${index}" class="text-lg font-bold text-gray-800 mb-4 en-text">${item.q}</h3>`;
+        html += `<div id="hint-${tabId}-${index}" class="hidden mb-4 p-3 bg-yellow-50 text-yellow-900 border-r-4 border-yellow-400 rounded text-sm font-semibold">${item.hint}</div>`;
+
+        html += `<div class="space-y-3">`;
+        item.options.forEach((opt, optIndex) => {
+          html += `
+                    <button 
+                        id="btn-${tabId}-${index}-${optIndex}"
+                        class="option-btn en-text w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:bg-blue-50 focus:outline-none"
+                        onclick="handleMCQAnswer('${tabId}', ${index}, ${optIndex}, ${item.ans})"
+                    >
+                        ${opt}
+                    </button>
+                `;
+        });
+        html += `</div>`;
+        html += `<div id="feedback-${tabId}-${index}" class="mt-4 hidden p-4 rounded-lg font-semibold text-sm leading-relaxed border"></div>`;
+
+        card.innerHTML = html;
+        return card;
+      }
+
+      function handleMCQAnswer(tabId, qIndex, selectedOpt, correctOpt) {
+        if (answered[tabId].has(qIndex)) return; // Prevent answering again
+
+        const id = `${tabId}-${qIndex}`;
+        userChoices[id] = selectedOpt;
+        answered[tabId].add(qIndex);
+
+        if (selectedOpt === correctOpt) {
+          scores[tabId]++;
+        }
+
+        saveState();
+        updateScoreDisplay();
+        applyMCQFeedback(tabId, qIndex, selectedOpt, correctOpt);
+      }
+
+      function applyMCQFeedback(tabId, qIndex, selectedOpt, correctOpt) {
+        const buttons = document.querySelectorAll(
+          `[id^="btn-${tabId}-${qIndex}-"]`,
+        );
+        buttons.forEach((btn) => {
+          btn.disabled = true;
+          btn.classList.add("cursor-not-allowed", "opacity-60");
+        });
+
+        const selectedBtn = document.getElementById(
+          `btn-${tabId}-${qIndex}-${selectedOpt}`,
+        );
+        const correctBtn = document.getElementById(
+          `btn-${tabId}-${qIndex}-${correctOpt}`,
+        );
+        const feedback = document.getElementById(`feedback-${tabId}-${qIndex}`);
+        const item = db[tabId][qIndex];
+
+        if (!feedback) return;
+        feedback.classList.remove("hidden");
+
+        if (selectedOpt === correctOpt) {
+          if (selectedBtn) {
+            selectedBtn.classList.add("selected-correct");
+            selectedBtn.classList.remove("opacity-60");
+          }
+          feedback.innerHTML = `✅ <b>إجابة صحيفة!</b><br><span class="text-gray-700 mt-2 block font-normal ar-text">${item.exp}</span>`;
+          feedback.classList.add(
+            "bg-green-50",
+            "border-green-200",
+            "text-green-800",
+          );
+        } else {
+          if (selectedBtn) {
+            selectedBtn.classList.add("selected-wrong");
+            selectedBtn.classList.remove("opacity-60");
+          }
+          if (correctBtn) {
+            correctBtn.classList.add("actual-correct");
+            correctBtn.classList.remove("opacity-60");
+          }
+          feedback.innerHTML = `❌ <b>إجابة خاطئة.</b> الإجابة الصحيحة مظللة بالأخضر.<br><span class="text-gray-700 mt-2 block font-normal ar-text">${item.exp}</span>`;
+          feedback.classList.add("bg-red-50", "border-red-200", "text-red-800");
+        }
+      }
+
+      function createTFCard(item, index, tabId) {
+        const card = document.createElement("div");
+        card.className =
+          "bg-white p-6 rounded-xl shadow-sm border border-gray-100 fade-in";
+
+        let html = getControlButtons(tabId, index);
+        html += `<h3 id="q-text-${tabId}-${index}" class="text-lg font-bold text-gray-800 mb-4 en-text">${item.q}</h3>`;
+        html += `<div id="hint-${tabId}-${index}" class="hidden mb-4 p-3 bg-yellow-50 text-yellow-900 border-r-4 border-yellow-400 rounded text-sm font-semibold">${item.hint}</div>`;
+
+        html += `<div class="flex space-x-4 space-x-reverse">
+                        <button id="btn-${tabId}-${index}-true" class="flex-1 option-btn font-bold px-4 py-3 rounded-lg border border-gray-200 hover:bg-blue-50" onclick="handleTFAnswer('${tabId}', ${index}, true, ${item.ans})">True (صح)</button>
+                        <button id="btn-${tabId}-${index}-false" class="flex-1 option-btn font-bold px-4 py-3 rounded-lg border border-gray-200 hover:bg-blue-50" onclick="handleTFAnswer('${tabId}', ${index}, false, ${item.ans})">False (خطأ)</button>
+                     </div>`;
+        html += `<div id="feedback-${tabId}-${index}" class="mt-4 hidden p-4 rounded-lg font-semibold text-sm leading-relaxed border"></div>`;
+
+        card.innerHTML = html;
+        return card;
+      }
+
+      function handleTFAnswer(tabId, qIndex, selectedVal, correctVal) {
+        if (answered[tabId].has(qIndex)) return;
+
+        const id = `${tabId}-${qIndex}`;
+        userChoices[id] = selectedVal;
+        answered[tabId].add(qIndex);
+
+        if (selectedVal === correctVal) {
+          scores[tabId]++;
+        }
+
+        saveState();
+        updateScoreDisplay();
+        applyTFFeedback(tabId, qIndex, selectedVal, correctVal);
+      }
+
+      function applyTFFeedback(tabId, qIndex, selectedVal, correctVal) {
+        const btnTrue = document.getElementById(`btn-${tabId}-${qIndex}-true`);
+        const btnFalse = document.getElementById(
+          `btn-${tabId}-${qIndex}-false`,
+        );
+        if (btnTrue) {
+          btnTrue.disabled = true;
+          btnTrue.classList.add("cursor-not-allowed", "opacity-60");
+        }
+        if (btnFalse) {
+          btnFalse.disabled = true;
+          btnFalse.classList.add("cursor-not-allowed", "opacity-60");
+        }
+
+        const selectedBtn = selectedVal ? btnTrue : btnFalse;
+        const correctBtn = correctVal ? btnTrue : btnFalse;
+        const feedback = document.getElementById(`feedback-${tabId}-${qIndex}`);
+        const item = db[tabId][qIndex];
+
+        if (!feedback) return;
+        feedback.classList.remove("hidden");
+
+        if (selectedVal === correctVal) {
+          if (selectedBtn) {
+            selectedBtn.classList.add("selected-correct");
+            selectedBtn.classList.remove("opacity-60");
+          }
+          feedback.innerHTML = `✅ <b>إجابة صحيحة!</b><br><span class="text-gray-700 mt-2 block font-normal ar-text">${item.exp}</span>`;
+          feedback.classList.add(
+            "bg-green-50",
+            "border-green-200",
+            "text-green-800",
+          );
+        } else {
+          if (selectedBtn) {
+            selectedBtn.classList.add("selected-wrong");
+            selectedBtn.classList.remove("opacity-60");
+          }
+          if (correctBtn) {
+            correctBtn.classList.add("actual-correct");
+            correctBtn.classList.remove("opacity-60");
+          }
+          feedback.innerHTML = `❌ <b>إجابة خاطئة.</b><br><span class="text-gray-700 mt-2 block font-normal ar-text">${item.exp}</span>`;
+          feedback.classList.add("bg-red-50", "border-red-200", "text-red-800");
+        }
+      }
+
+      function createEssayCard(item, index, tabId) {
+        const card = document.createElement("div");
+        card.className =
+          "bg-white p-6 rounded-xl shadow-sm border border-gray-100 fade-in";
+
+        let html = getControlButtons(tabId, index);
+        html += `<h3 id="q-text-${tabId}-${index}" class="text-lg font-bold text-gray-800 mb-4 en-text">${item.q}</h3>`;
+        html += `<div id="hint-${tabId}-${index}" class="hidden mb-4 p-3 bg-yellow-50 text-yellow-900 border-r-4 border-yellow-400 rounded text-sm font-semibold">${item.hint}</div>`;
+
+        html += `
+                <button onclick="toggleAnswer('essay-ans-${tabId}-${index}')" class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-md font-semibold mb-3 transition-colors border">
+                    إظهار / إخفاء الإجابة النموذجية
+                </button>
+                <div id="essay-ans-${tabId}-${index}" data-visible="false" class="hidden mt-2 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-md text-gray-800 leading-relaxed en-text text-left">
+                    ${item.ans}
+                </div>
+            `;
+
+        card.innerHTML = html;
+        return card;
+      }
+
+      function toggleAnswer(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const isHidden = el.classList.contains("hidden");
+
+        if (isHidden) {
+          el.classList.remove("hidden");
+          el.classList.add("fade-in");
+          el.setAttribute("data-visible", "true");
+          userChoices[id] = true; // Save visibility state
+        } else {
+          el.classList.add("hidden");
+          el.classList.remove("fade-in");
+          el.setAttribute("data-visible", "false");
+          userChoices[id] = false;
+        }
+        saveState(); // Save to memory
+      }
+
+      function updateScoreDisplay() {
+        const totalScore = scores.mcq1 + scores.mcq2 + scores.mcq3 + scores.tf;
+        const answeredCount =
+          (answered.mcq1?.size || 0) +
+          (answered.mcq2?.size || 0) +
+          (answered.mcq3?.size || 0) +
+          (answered.tf?.size || 0);
+        document.getElementById("score-display").innerText =
+          `${totalScore} / ${answeredCount}`;
+      }
+    </script>
+  </body>
+</html>
